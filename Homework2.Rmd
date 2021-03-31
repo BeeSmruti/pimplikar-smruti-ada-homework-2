@@ -1,0 +1,453 @@
+---
+title: "Homework 2"
+author: "SP"
+date: "3/30/2021"
+output: html_document
+---
+
+```{r}
+install.packages("tidyverse")
+install.packages("mosaic")
+install.packages("radiant")
+install.packages("curl")
+library(tidyverse)
+library(mosaic)
+library(radiant)
+library(curl)
+```
+
+
+```{r}
+##Challenge 1
+##Getting data into R
+f <- curl("https://raw.githubusercontent.com/difiore/ada-2021-datasets/master/IMDB-movies.csv")
+d <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+head(d)
+## to filter data by year and runtime AND add a new column that gives the decade the film belongs to
+d1<-filter(d, startYear>=1920 & startYear<=1979, runtimeMinutes >= 60 & runtimeMinutes <= 180)%>%mutate(d1, Decade=as.character(floor(startYear/10)*10-1900))
+## d1 is 5651 obs. of 11 variables
+## runtimeminutes for each decade as histograms 
+ggplot(d1, aes(x=runtimeMinutes))+geom_histogram()+facet_wrap(~Decade)
+## pop mean and pop sd in runtimeminutes for each decade
+results<-cbind.data.frame(aggregate(d1$runtimeMinutes, list(d1$Decade), mean), aggregate(d1$runtimeMinutes, list(d1$Decade), sd))
+results
+## single sample of 100 movies without replacement
+dgb<-group_by(d1, Decade)
+d2<-sample_n(dgb,100)
+## single sample mean
+mean(d2$runtimeMinutes)
+## single sample sd
+sd1<-sd(d2$runtimeMinutes)
+## SE around pop mean runtimeminutes for each decade based on sd
+## SD for population
+SD<-aggregate(d1$runtimeMinutes, list(d1$Decade), sd)
+SD
+mean(SD$x)
+## standard error 
+se<-(SD[,2]/10)
+se
+M<-aggregate(d1$runtimeMinutes, list(d1$Decade), mean)
+M
+se1<-(M[,2]/10)
+se1
+
+## sampling distribution - 1000 samples of 100 films by decade
+reps <- 1000
+n <- 100
+## Mean runtime minutes
+samp_dist_mean20<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="20"), size=n, replace=FALSE))
+samp_dist_mean30<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="30"), size=n, replace=FALSE))
+samp_dist_mean40<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="40"), size=n, replace=FALSE))
+samp_dist_mean50<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="50"), size=n, replace=FALSE))
+samp_dist_mean60<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="60"), size=n, replace=FALSE))
+samp_dist_mean70<- 
+  do(reps)*mean(~runtimeMinutes, data=sample_n(filter(d1, Decade=="70"), size=n, replace=FALSE))
+
+## SD
+samp_dist_sd20<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="20"), size=n, replace=FALSE))
+samp_dist_sd30<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="30"), size=n, replace=FALSE))
+samp_dist_sd40<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="40"), size=n, replace=FALSE))
+samp_dist_sd50<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="50"), size=n, replace=FALSE))
+samp_dist_sd60<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="60"), size=n, replace=FALSE))
+samp_dist_sd70<- 
+  do(reps)*sd(~runtimeMinutes, data=sample_n(filter(d1, Decade=="70"), size=n, replace=FALSE))
+
+calcpopmean20<-mean(~mean, data=samp_dist_mean20)
+calcpopmean30<-mean(~mean, data=samp_dist_mean30)
+calcpopmean40<-mean(~mean, data=samp_dist_mean40)
+calcpopmean50<-mean(~mean, data=samp_dist_mean50)
+calcpopmean60<-mean(~mean, data=samp_dist_mean60)
+calcpopmean70<-mean(~mean, data=samp_dist_mean70)
+
+se_mean20 <- favstats(~mean, data = samp_dist_mean20)$sd
+se_mean30 <- favstats(~mean, data = samp_dist_mean30)$sd
+se_mean40 <- favstats(~mean, data = samp_dist_mean40)$sd
+se_mean50 <- favstats(~mean, data = samp_dist_mean50)$sd
+se_mean60 <- favstats(~mean, data = samp_dist_mean60)$sd
+se_mean70 <- favstats(~mean, data = samp_dist_mean70)$sd
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean20,
+            xlab = "Sampling Distribution for 20s"
+  )
+library(cowplot)
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean30,
+            xlab = "Sampling Distribution for 30s"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean40,
+            xlab = "Sampling Distribution for 40s"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean50,
+            xlab = "Sampling Distribution for 50s"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean60,
+            xlab = "Sampling Distribution for 60s"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean70,
+            xlab = "Sampling Distribution for 70s"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+```
+
+
+```{r}
+##Challenge 2
+## POisson distribution with lambda =12
+l <- 12
+p1 <-
+  plotDist(
+    "pois",
+    lambda = 12,
+    main = paste0("Poisson Distribution\nwith lambda=", l),
+    xlab = "x",
+    ylab = "Pr(X=x)"
+  )
+p1
+## probability that she will see 9 or fewer bees arrive during any given session
+ppois(q = 9, lambda = 12, lower.tail = TRUE)
+## probability that she will see no bees arrive in a session
+ppois(q = 0, lambda = 12, lower.tail = TRUE)
+## probability that she will see exactly 5 bees arrive in a session
+dpois(x = 5, lambda = 12) 
+## probability that she will see more than 18 bees arrive in a session
+ppois(q = 18, lambda = 12, lower.tail = FALSE)
+## plot of Poisson mass function
+success<-c(0:24)
+plot(success, dpois(success, lambda=12), type='h')
+## simulation of 1460 results
+p2<-rpois(1460, 12)
+## plot with limits of x from 0-24
+histogram(p2, xlim[0:24])
+```
+Simulated results don't look too far from the PMF plotted above. The plot looks left skewed in the slightest bit. 
+```{r}
+## Challenge 3
+## getting zombie data into R
+f <- curl("https://raw.githubusercontent.com/difiore/ada-2021-datasets/master/zombies.csv")
+d <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+head(d)
+## pop means for quant variables
+n<-10000
+reps <- 500
+## for height
+samp_dist_mean1 <-
+  do(reps) * mean(~height, data = sample_n(d, size = n, replace = TRUE))
+samp_dist_mean1
+mean(~mean, data=samp_dist_mean1)
+## for weight
+samp_dist_mean2 <-
+  do(reps) * mean(~weight, data = sample_n(d, size = n, replace = TRUE))
+samp_dist_mean2
+mean(~mean, data=samp_dist_mean2)
+## for zombies killed
+samp_dist_mean3 <-
+  do(reps) * mean(~zombies_killed, data = sample_n(d, size = n, replace = TRUE))
+samp_dist_mean3
+mean(~mean, data=samp_dist_mean3)
+## for age
+samp_dist_mean4 <-
+  do(reps) * mean(~age, data = sample_n(d, size = n, replace = TRUE))
+samp_dist_mean4
+mean(~mean, data=samp_dist_mean4)
+## for years of education
+samp_dist_mean5 <-
+  do(reps) * mean(~years_of_education, data = sample_n(d, size = n, replace = TRUE))
+samp_dist_mean5
+mean(~mean, data=samp_dist_mean5)
+
+## sd for the quant variables
+## for height
+sdpop(d$height)
+## for weight
+sdpop(d$weight)
+## for zombies killed
+sdpop(d$zombies_killed)
+## for age
+sdpop(d$age)
+## for years of education
+sdpop(d$years_of_education)
+
+##boxplots by gender
+## height
+ggplot(d, aes(x=gender, y=height)) + 
+  geom_boxplot()
+## weight
+ggplot(d, aes(x=gender, y=weight)) + 
+  geom_boxplot()
+## zombies killed
+ggplot(d, aes(x=gender, y=zombies_killed)) + 
+  geom_boxplot()
+## age
+ggplot(d, aes(x=gender, y=age)) + 
+  geom_boxplot()
+## years of education
+ggplot(d, aes(x=gender, y=years_of_education)) + 
+  geom_boxplot()
+
+## scatterplots
+## height
+ggplot(d, aes(x=height, y=age, colour=gender)) + geom_point()
+## weight
+ggplot(d, aes(x=weight, y=age, colour=gender)) + geom_point()
+
+## they seem different in that the weight values are more scattered as compared to the height values, those seem more condensed(?)
+
+## histograms
+##height
+histogram(d$height)
+##weight
+histogram(d$weight)
+##zombies killed
+histogram(d$age)
+##age
+histogram(d$zombies_killed)
+##years of education
+histogram(d$years_of_education, na.rm=TRUE)
+
+## of the above histograms, zombies killed and years of education are two such quantitative variables that DO NOT seem to be drawn from a normal distribution.
+
+##QQ plots
+## height
+qqnorm(d$height)
+## weight
+qqnorm(d$weight)
+## age
+qqnorm(d$age)
+## zombies killed
+qqnorm(d$zombies_killed)
+## years of education 
+qqnorm(d$years_of_education)
+## I think zombies killed and years of education do not seem to be drawn from a normal distribution. 
+
+## to make one sample of 50
+z<-sample_n(d, 50)
+z
+## mean for each variable 
+## height
+mean(z$height)
+##weight
+mean(z$weight)
+## age
+mean(z$age)
+## zombies killed
+mean(z$zombies_killed)
+## years of education
+mean(z$years_of_education)
+
+##sd for each variable
+##height
+sd(z$height)
+## weight
+sd(z$weight)
+## age
+sd(z$age)
+## zombies killed
+sd(z$zombies_killed)
+## years of education
+sd(z$years_of_education)
+
+##standard error for all variables
+standard_error <- function(q) sd(q)/sqrt(length(z))
+standard_error(z$height)
+standard_error(z$weight)
+standard_error(z$zombies_killed)
+standard_error(z$years_of_education)
+standard_error(z$age)
+
+## 95% confidence interval for each mean
+## height
+percent.ci<-95
+alpha<-1-percent.ci/100
+lower<-mean(z$height)+qnorm(alpha/2)*standard_error(z$height)
+lower
+upper<-mean(z$height)+qnorm(1-alpha/2)*standard_error(z$height)
+upper
+
+## 65.46981 - 70.27605
+
+## weight
+percent.ci<-95
+alpha<-1-percent.ci/100
+lower<-mean(z$weight)+qnorm(alpha/2)*standard_error(z$weight)
+lower
+upper<-mean(z$weight)+qnorm(1-alpha/2)*standard_error(z$weight)
+upper
+
+## 135.9153 - 156.0318
+
+##age
+percent.ci<-95
+alpha<-1-percent.ci/100
+lower<-mean(z$age)+qnorm(alpha/2)*standard_error(z$age)
+lower
+upper<-mean(z$age)+qnorm(1-alpha/2)*standard_error(z$age)
+upper
+
+## 18.01459-21.28513
+
+## zombies killed
+percent.ci<-95
+alpha<-1-percent.ci/100
+lower<-mean(z$zombies_killed)+qnorm(alpha/2)*standard_error(z$zombies_killed)
+lower
+upper<-mean(z$zombies_killed)+qnorm(1-alpha/2)*standard_error(z$zombies_killed)
+upper
+## 1.513462-3.246538
+
+## years of education 
+percent.ci<-95
+alpha<-1-percent.ci/100
+lower<-mean(z$years_of_education)+qnorm(alpha/2)*standard_error(z$years_of_education)
+lower
+upper<-mean(z$years_of_education)+qnorm(1-alpha/2)*standard_error(z$years_of_education)
+upper
+## 1.97449-3.74551
+
+
+reps <- 99
+#height means
+samp_dist_mean_height <- do(reps) * mean(~height, data = sample_n(d, size = n, replace = TRUE))
+#weight means
+samp_dist_mean_weight <- do(reps) * mean(~weight, data = sample_n(d, size = n, replace = TRUE))
+#number of zombies killed mean
+samp_dist_mean_zombieskilled <- do(reps) * mean(~zombies_killed, data = sample_n(d, size = n, replace = TRUE))
+#age mean
+samp_dist_mean_age <- do(reps) * mean(~age, data = sample_n(d, size = n, replace = TRUE))
+#years of education mean
+samp_dist_mean_yearsofedu <- do(reps) * mean(~years_of_education, data = sample_n(d, size = n, replace = TRUE))
+
+
+##replace the data part with whatever sample distribution required
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean_age,
+            xlab = "Sampling Distribution for the\nMean of Age"
+  )
+library(cowplot)
+plot_grid(mean_plot, ncol = 2)
+
+## generates a sampling distribution
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean_height,
+            xlab = "Sampling Distribution for the\nMean of Height"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean_weight,
+            xlab = "Sampling Distribution for the\nMean of Weight"
+)
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean_zombieskilled,
+            xlab = "Sampling Distribution for the\nMean of Zombies Killed"
+)
+plot_grid(mean_plot, ncol = 2)
+
+mean_plot <-
+  histogram(~mean,
+            data = samp_dist_mean_yearsofedu,
+            xlab = "Sampling Distribution for the\nMean of Years of Education"
+  )
+plot_grid(mean_plot, ncol = 2)
+
+detach(package:cowplot)
+
+##estimated population mean based on mean of sampling distribution of sample means
+mean_height <- mean(~mean, data = samp_dist_mean_height) 
+
+mean_weight <- mean(~mean, data = samp_dist_mean_weight) 
+
+mean_zombieskilled <- mean(~mean, data = samp_dist_mean_zombieskilled)
+
+mean_age <- mean(~mean, data = samp_dist_mean_age)
+
+mean_yearsofedu <- mean(~mean, data = samp_dist_mean_yearsofedu)
+
+#calculate the true population mean 
+favstats(~age, data = d)
+favstats(~height, data=d)
+favstats(~weight, data=d)
+favstats(~years_of_education, data=d)
+favstats(~zombies_killed, data=d)
+
+#To  estimate the SE from a sampling distribution, we simply take the standard standard deviation of the set of values comprising that distribution
+se_mean_age <- favstats(~mean, data = samp_dist_mean_age)$sd
+
+se_mean_height <- favstats(~mean, data = samp_dist_mean_height)$sd
+
+se_mean_weight <- favstats(~mean, data = samp_dist_mean_weight)$sd
+
+se_mean_yearsofedu <- favstats(~mean, data = samp_dist_mean_yearsofedu)$sd
+
+se_mean_zombieskilled <- favstats(~mean, data = samp_dist_mean_zombieskilled)$sd
+
+#A simple way of doing the above would be below:
+(ci_age <- mean_age + c(-1, 1) * qnorm(1 - alpha / 2) * se_mean_age)
+
+#CI for the rest are below
+
+(ci_height <- mean_height + c(-1, 1) * qnorm(1 - alpha / 2) * se_mean_height)
+
+(ci_weight <- mean_weight + c(-1, 1) * qnorm(1 - alpha / 2) * se_mean_weight)
+
+(ci_yearsofedu <- mean_yearsofedu + c(-1, 1) * qnorm(1 - alpha / 2) * se_mean_yearsofedu)
+
+(ci_zombieskilled <- mean_zombieskilled + c(-1, 1) * qnorm(1 - alpha / 2) * se_mean_zombieskilled)
+```
